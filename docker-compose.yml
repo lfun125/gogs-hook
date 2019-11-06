@@ -1,0 +1,10 @@
+version: '3.1'
+
+services:
+  vef-web:
+    image: gogs-hook:latest
+    restart: always
+    ports:
+      - "127.0.0.1:13000:13000"
+    volumes:
+      - "./:/workdir/etc/"
