@@ -1,0 +1,6 @@
+listen: :13000
+jenkins_url: http://jenkins.demo.com
+repository:
+  group/project_name:
+    branches:
+      dev: jenkins_project_name
