@@ -1,6 +1,6 @@
 services:
   gogs-hook:
-    image: gogs-hook:latest
+    image: hfdend/gogs-hook:latest
     restart: always
     ports:
       - "127.0.0.1:13000:13000"
