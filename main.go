@@ -6,20 +6,20 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"strings"
 
-	yaml "gopkg.in/yaml.v2"
+	yaml "gopkg.in/yaml.v3"
 )
 
 type Model struct {
 	Listen     string `yaml:"listen"`
 	JenkinsUrl string `yaml:"jenkins_url"`
 	Repository map[string]struct {
-		Branches map[string]string `json:"branches"` // branch -> jenkins job
+		Branches map[string]string `yaml:"branches"` // branch -> token
 	} `yaml:"repository"`
 }
 
@@ -37,7 +37,7 @@ func main() {
 	)
 	flag.StringVar(&configFile, "f", "./config.yml", "config file")
 	flag.Parse()
-	configRaw, err := ioutil.ReadFile(configFile)
+	configRaw, err := os.ReadFile(configFile)
 	if err != nil {
 		log.Fatalln(err)
 	}
@@ -50,7 +50,7 @@ func main() {
 			return
 		}
 		var data Push
-		requestRaw, err := ioutil.ReadAll(r.Body)
+		requestRaw, err := io.ReadAll(r.Body)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			echo(w, err)
@@ -67,20 +67,20 @@ func main() {
 			echo(w, `Not config this repository`)
 			return
 		}
-		var job string
+		var token string
 		for b, j := range repository.Branches {
 			if path.Base(data.Ref) == b {
-				job = j
+				token = j
 				break
 			}
 		}
-		if job == "" {
+		if token == "" {
 			w.WriteHeader(http.StatusOK)
 			echo(w, `This branch does not need to be released`)
 			return
 		}
-		requestUrl := fmt.Sprintf("%s/gogs-webhook/?job=%s", strings.TrimRight(Config.JenkinsUrl, "/"), job)
-		req, err := http.NewRequest(r.Method, requestUrl, bytes.NewReader(requestRaw))
+		requestUrl := fmt.Sprintf("%s/generic-webhook-trigger/invoke?token=%s", strings.TrimRight(Config.JenkinsUrl, "/"), token)
+		req, err := http.NewRequest(http.MethodGet, requestUrl, nil)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			echo(w, err)
